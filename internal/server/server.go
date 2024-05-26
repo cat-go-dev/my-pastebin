@@ -30,7 +30,7 @@ func (s *Server) Start(ctx context.Context) {
 
 	r.GET("api/pasta/all", func(c *gin.Context) {
 		// todo: think about pagination
-		collection, err := s.pastaService.GetAll()
+		collection, err := s.pastaService.GetAll(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err,
@@ -41,9 +41,14 @@ func (s *Server) Start(ctx context.Context) {
 	})
 
 	r.GET("api/pasta/:hash", func(c *gin.Context) {
-		// todo: vavidation
 		hash := c.Param("hash")
-		pasta, err := s.pastaService.GetByHash(hash)
+		if hash == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "empty hash string",
+			})
+		}
+
+		pasta, err := s.pastaService.GetByHash(ctx, hash)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err,
@@ -54,29 +59,23 @@ func (s *Server) Start(ctx context.Context) {
 	})
 
 	r.POST("api/pasta", func(c *gin.Context) {
-		// todo: vavidation
 		body := StoreBody{}
 		if err := c.BindJSON(&body); err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 
-		pasta, err := s.pastaService.Store(body.Pasta)
+		pasta, err := s.pastaService.Store(ctx, body.Pasta)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err,
 			})
 		} else {
-			// todo: make by json response model
-			c.JSON(200, gin.H{
-				"hash":       pasta.Hash,
-				"paste":      pasta.Pasta,
-				"created_at": pasta.CreatedAt,
-			})
+			c.JSON(200, gin.H{"result": pasta})
 		}
 	})
 
-	err := r.Run() // listen and serve on 0.0.0.0:8080
+	err := r.Run()
 	if err != nil {
 		fmt.Println("Server starting error")
 	}

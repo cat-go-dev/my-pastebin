@@ -1,6 +1,7 @@
 package pasta
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"time"
@@ -13,9 +14,9 @@ type Pasta struct {
 }
 
 type repositoryInterface interface {
-	GetAll() ([]*Pasta, error)
-	GetByHash(hash string) (*Pasta, error)
-	Store(pasta *Pasta) (*Pasta, error)
+	GetAll(ctx context.Context) ([]*Pasta, error)
+	GetByHash(ctx context.Context, hash string) (*Pasta, error)
+	Store(ctx context.Context, pasta *Pasta) (*Pasta, error)
 }
 
 type PastaService struct {
@@ -28,8 +29,8 @@ func NewPastaService(repository repositoryInterface) *PastaService {
 	}
 }
 
-func (p *PastaService) GetAll() ([]*Pasta, error) {
-	res, err := p.repository.GetAll()
+func (p *PastaService) GetAll(ctx context.Context) ([]*Pasta, error) {
+	res, err := p.repository.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +38,8 @@ func (p *PastaService) GetAll() ([]*Pasta, error) {
 	return res, nil
 }
 
-func (p *PastaService) GetByHash(hash string) (*Pasta, error) {
-	pasta, err := p.repository.GetByHash(hash)
+func (p *PastaService) GetByHash(ctx context.Context, hash string) (*Pasta, error) {
+	pasta, err := p.repository.GetByHash(ctx, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +47,8 @@ func (p *PastaService) GetByHash(hash string) (*Pasta, error) {
 	return pasta, nil
 }
 
-func (p *PastaService) Store(pastaText string) (*Pasta, error) {
-	pasta, err := p.repository.Store(&Pasta{
+func (p *PastaService) Store(ctx context.Context, pastaText string) (*Pasta, error) {
+	pasta, err := p.repository.Store(ctx, &Pasta{
 		Hash:      p.createHashFromPastaText(pastaText),
 		Pasta:     pastaText,
 		CreatedAt: time.Now().Unix(),
@@ -65,7 +66,7 @@ func (p *PastaService) createHashFromPastaText(pastaText string) string {
 		l = 20
 	}
 
-	hash := md5.Sum([]byte(pastaText[:l]))
+	hash := md5.Sum([]byte(pastaText[:len(pastaText)-l]))
 
 	return fmt.Sprintf("%x", hash)
 }

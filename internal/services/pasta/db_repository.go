@@ -1,6 +1,7 @@
 package pasta
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -17,7 +18,7 @@ func NewDBRepository(conn *sql.DB) *dBRepository {
 	}
 }
 
-func (r *dBRepository) GetAll() ([]*Pasta, error) {
+func (r *dBRepository) GetAll(ctx context.Context) ([]*Pasta, error) {
 	result := make([]*Pasta, 0, 1000)
 
 	rows, err := r.conn.Query("select * from pastes")
@@ -48,7 +49,7 @@ func (r *dBRepository) GetAll() ([]*Pasta, error) {
 	return result, nil
 }
 
-func (r *dBRepository) GetByHash(hash string) (*Pasta, error) {
+func (r *dBRepository) GetByHash(ctx context.Context, hash string) (*Pasta, error) {
 	stmt, err := r.conn.Prepare("select * from pastes where hash = ?")
 	if err != nil {
 		fmt.Println(err)
@@ -66,6 +67,8 @@ func (r *dBRepository) GetByHash(hash string) (*Pasta, error) {
 	}
 	defer stmt.Close()
 
+	// todo: not found error
+
 	return &Pasta{
 		Hash:      h,
 		Pasta:     p,
@@ -73,12 +76,15 @@ func (r *dBRepository) GetByHash(hash string) (*Pasta, error) {
 	}, nil
 }
 
-func (r *dBRepository) Store(pasta *Pasta) (*Pasta, error) {
+func (r *dBRepository) Store(ctx context.Context, pasta *Pasta) (*Pasta, error) {
 	stmt, err := r.conn.Prepare("insert into pastes (hash, pasta, created_at) values (?,?,?);")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
+
+	// todo: unique error
+	// todo: random hash
 
 	_, err = stmt.Exec(pasta.Hash, pasta.Pasta, pasta.CreatedAt)
 	if err != nil {
