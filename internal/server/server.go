@@ -26,13 +26,22 @@ type StoreBody struct {
 func (s *Server) Start(ctx context.Context) {
 	r := gin.Default()
 
+	// todo: make swagger
+
 	r.GET("api/pasta/all", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "all",
-		})
+		// todo: think about pagination
+		collection, err := s.pastaService.GetAll()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err,
+			})
+		} else {
+			c.JSON(200, gin.H{"result": collection})
+		}
 	})
 
 	r.GET("api/pasta/:hash", func(c *gin.Context) {
+		// todo: vavidation
 		hash := c.Param("hash")
 		pasta, err := s.pastaService.GetByHash(hash)
 		if err != nil {
@@ -45,6 +54,7 @@ func (s *Server) Start(ctx context.Context) {
 	})
 
 	r.POST("api/pasta", func(c *gin.Context) {
+		// todo: vavidation
 		body := StoreBody{}
 		if err := c.BindJSON(&body); err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)

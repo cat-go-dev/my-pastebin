@@ -17,10 +17,35 @@ func NewDBRepository(conn *sql.DB) *dBRepository {
 	}
 }
 
-func (r *dBRepository) GetAll() []Pasta {
-	result := make([]Pasta, 5)
+func (r *dBRepository) GetAll() ([]*Pasta, error) {
+	result := make([]*Pasta, 0, 1000)
 
-	return result
+	rows, err := r.conn.Query("select * from pastes")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var h string
+		var p string
+		var c int64
+
+		err = rows.Scan(&h, &p, &c)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		result = append(result, &Pasta{
+			Hash:      h,
+			Pasta:     p,
+			CreatedAt: c,
+		})
+	}
+
+	return result, nil
 }
 
 func (r *dBRepository) GetByHash(hash string) (*Pasta, error) {
@@ -39,6 +64,7 @@ func (r *dBRepository) GetByHash(hash string) (*Pasta, error) {
 		fmt.Println(err)
 		return nil, err
 	}
+	defer stmt.Close()
 
 	return &Pasta{
 		Hash:      h,

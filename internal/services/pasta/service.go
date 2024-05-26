@@ -13,7 +13,7 @@ type Pasta struct {
 }
 
 type repositoryInterface interface {
-	GetAll() []Pasta
+	GetAll() ([]*Pasta, error)
 	GetByHash(hash string) (*Pasta, error)
 	Store(pasta *Pasta) (*Pasta, error)
 }
@@ -26,6 +26,15 @@ func NewPastaService(repository repositoryInterface) *PastaService {
 	return &PastaService{
 		repository: repository,
 	}
+}
+
+func (p *PastaService) GetAll() ([]*Pasta, error) {
+	res, err := p.repository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (p *PastaService) GetByHash(hash string) (*Pasta, error) {
