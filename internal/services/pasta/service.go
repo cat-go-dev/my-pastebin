@@ -7,14 +7,14 @@ import (
 )
 
 type Pasta struct {
-	Hash      string
-	Pasta     string
-	CreatedAt int64
+	Hash      string `json:"hash"`
+	Pasta     string `json:"pasta"`
+	CreatedAt int64  `json:"created_at"`
 }
 
 type repositoryInterface interface {
 	GetAll() []Pasta
-	GetByHash(hash string) *Pasta
+	GetByHash(hash string) (*Pasta, error)
 	Store(pasta *Pasta) (*Pasta, error)
 }
 
@@ -26,6 +26,15 @@ func NewPastaService(repository repositoryInterface) *PastaService {
 	return &PastaService{
 		repository: repository,
 	}
+}
+
+func (p *PastaService) GetByHash(hash string) (*Pasta, error) {
+	pasta, err := p.repository.GetByHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return pasta, nil
 }
 
 func (p *PastaService) Store(pastaText string) (*Pasta, error) {

@@ -23,8 +23,28 @@ func (r *dBRepository) GetAll() []Pasta {
 	return result
 }
 
-func (r *dBRepository) GetByHash(hash string) *Pasta {
-	return &Pasta{Hash: hash}
+func (r *dBRepository) GetByHash(hash string) (*Pasta, error) {
+	stmt, err := r.conn.Prepare("select * from pastes where hash = ?")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	var h string
+	var p string
+	var c int64
+
+	err = stmt.QueryRow(hash).Scan(&h, &p, &c)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &Pasta{
+		Hash:      h,
+		Pasta:     p,
+		CreatedAt: c,
+	}, nil
 }
 
 func (r *dBRepository) Store(pasta *Pasta) (*Pasta, error) {

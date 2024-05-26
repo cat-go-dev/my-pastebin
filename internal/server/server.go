@@ -33,11 +33,15 @@ func (s *Server) Start(ctx context.Context) {
 	})
 
 	r.GET("api/pasta/:hash", func(c *gin.Context) {
-		// hash := c.Param("hash")
-
-		c.JSON(200, gin.H{
-			"message": "all",
-		})
+		hash := c.Param("hash")
+		pasta, err := s.pastaService.GetByHash(hash)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err,
+			})
+		} else {
+			c.JSON(200, gin.H{"result": pasta})
+		}
 	})
 
 	r.POST("api/pasta", func(c *gin.Context) {
@@ -53,6 +57,7 @@ func (s *Server) Start(ctx context.Context) {
 				"message": err,
 			})
 		} else {
+			// todo: make by json response model
 			c.JSON(200, gin.H{
 				"hash":       pasta.Hash,
 				"paste":      pasta.Pasta,
