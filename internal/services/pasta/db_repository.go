@@ -1,27 +1,44 @@
 package pasta
 
+import (
+	"database/sql"
+	"fmt"
+
+	_ "github.com/mattn/go-sqlite3"
+)
+
 type dBRepository struct {
-	// todo: add connection
+	conn *sql.DB
 }
 
-// GetAll() []Pasta
-// GetById(id string) *Pasta
-// Store(pasta Pasta)
-
-func newDBRepository() *dBRepository {
-	return &dBRepository{}
+func NewDBRepository(conn *sql.DB) *dBRepository {
+	return &dBRepository{
+		conn: conn,
+	}
 }
 
 func (r *dBRepository) GetAll() []Pasta {
-	result := make([]Pasta, 5, 5)
+	result := make([]Pasta, 5)
 
 	return result
 }
 
-func (r *dBRepository) GetById(id string) *Pasta {
-	return &Pasta{id: id}
+func (r *dBRepository) GetByHash(hash string) *Pasta {
+	return &Pasta{Hash: hash}
 }
 
-func (r *dBRepository) Store(pasta Pasta) {
+func (r *dBRepository) Store(pasta *Pasta) (*Pasta, error) {
+	stmt, err := r.conn.Prepare("insert into pastes (hash, pasta, created_at) values (?,?,?);")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 
+	_, err = stmt.Exec(pasta.Hash, pasta.Pasta, pasta.CreatedAt)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return pasta, nil
 }
