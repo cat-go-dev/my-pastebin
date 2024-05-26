@@ -4,19 +4,26 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 
 	"my-pastebin/internal/server"
+	"my-pastebin/internal/services/config"
 	"my-pastebin/internal/services/pasta"
 )
 
 func main() {
-	// todo: config
 	// todo: logs
 	// todo: ratelimitter middleware
 
 	ctx := context.Background()
 
-	db, err := sql.Open("sqlite3", "./database/pastebin.db")
+	config, err := config.Load("./")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+
+	db, err := sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		fmt.Println(err)
 	}
