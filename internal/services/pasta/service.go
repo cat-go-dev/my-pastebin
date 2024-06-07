@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -21,17 +22,20 @@ type repositoryInterface interface {
 
 type PastaService struct {
 	repository repositoryInterface
+	logger     *slog.Logger
 }
 
-func NewPastaService(repository repositoryInterface) *PastaService {
+func NewPastaService(repository repositoryInterface, logger *slog.Logger) *PastaService {
 	return &PastaService{
 		repository: repository,
+		logger:     logger,
 	}
 }
 
 func (p *PastaService) GetAll(ctx context.Context) ([]*Pasta, error) {
 	res, err := p.repository.GetAll(ctx)
 	if err != nil {
+		p.logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -41,6 +45,7 @@ func (p *PastaService) GetAll(ctx context.Context) ([]*Pasta, error) {
 func (p *PastaService) GetByHash(ctx context.Context, hash string) (*Pasta, error) {
 	pasta, err := p.repository.GetByHash(ctx, hash)
 	if err != nil {
+		p.logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -54,6 +59,7 @@ func (p *PastaService) Store(ctx context.Context, pastaText string) (*Pasta, err
 		CreatedAt: time.Now().Unix(),
 	})
 	if err != nil {
+		p.logger.Error(err.Error())
 		return nil, err
 	}
 

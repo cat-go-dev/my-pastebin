@@ -3,18 +3,20 @@ package pasta
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log/slog"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type dBRepository struct {
-	conn *sql.DB
+	conn   *sql.DB
+	logger *slog.Logger
 }
 
-func NewDBRepository(conn *sql.DB) *dBRepository {
+func NewDBRepository(conn *sql.DB, logger *slog.Logger) *dBRepository {
 	return &dBRepository{
-		conn: conn,
+		conn:   conn,
+		logger: logger,
 	}
 }
 
@@ -23,7 +25,7 @@ func (r *dBRepository) GetAll(ctx context.Context) ([]*Pasta, error) {
 
 	rows, err := r.conn.Query("select * from pastes")
 	if err != nil {
-		fmt.Println(err)
+		r.logger.Error(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -35,7 +37,7 @@ func (r *dBRepository) GetAll(ctx context.Context) ([]*Pasta, error) {
 
 		err = rows.Scan(&h, &p, &c)
 		if err != nil {
-			fmt.Println(err)
+			r.logger.Error(err.Error())
 			return nil, err
 		}
 
@@ -52,7 +54,7 @@ func (r *dBRepository) GetAll(ctx context.Context) ([]*Pasta, error) {
 func (r *dBRepository) GetByHash(ctx context.Context, hash string) (*Pasta, error) {
 	stmt, err := r.conn.Prepare("select * from pastes where hash = ?")
 	if err != nil {
-		fmt.Println(err)
+		r.logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -62,7 +64,7 @@ func (r *dBRepository) GetByHash(ctx context.Context, hash string) (*Pasta, erro
 
 	err = stmt.QueryRow(hash).Scan(&h, &p, &c)
 	if err != nil {
-		fmt.Println(err)
+		r.logger.Error(err.Error())
 		return nil, err
 	}
 	defer stmt.Close()
@@ -79,7 +81,7 @@ func (r *dBRepository) GetByHash(ctx context.Context, hash string) (*Pasta, erro
 func (r *dBRepository) Store(ctx context.Context, pasta *Pasta) (*Pasta, error) {
 	stmt, err := r.conn.Prepare("insert into pastes (hash, pasta, created_at) values (?,?,?);")
 	if err != nil {
-		fmt.Println(err)
+		r.logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -88,7 +90,7 @@ func (r *dBRepository) Store(ctx context.Context, pasta *Pasta) (*Pasta, error) 
 
 	_, err = stmt.Exec(pasta.Hash, pasta.Pasta, pasta.CreatedAt)
 	if err != nil {
-		fmt.Println(err)
+		r.logger.Error(err.Error())
 		return nil, err
 	}
 

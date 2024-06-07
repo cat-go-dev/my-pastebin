@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"my-pastebin/internal/server"
@@ -12,12 +13,12 @@ import (
 )
 
 func main() {
-	// todo: logs
-	// todo: ratelimitter middleware
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger.Info("Server starting")
 
 	ctx := context.Background()
 
-	config, err := config.Load("./")
+	config, err := config.Load("../../")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
@@ -29,11 +30,11 @@ func main() {
 	}
 	defer db.Close()
 
-	dBRepository := pasta.NewDBRepository(db)
-	pastaService := pasta.NewPastaService(dBRepository)
+	dBRepository := pasta.NewDBRepository(db, logger)
+	pastaService := pasta.NewPastaService(dBRepository, logger)
 
 	fmt.Println("starting server")
-	server := server.New(pastaService)
+	server := server.New(pastaService, logger)
 	server.Start(ctx)
 
 	// todo: graceful shutdown
